@@ -56,7 +56,7 @@ namespace Nurungi.Build
             var cc = player.AddComponent<CharacterController>();
             cc.height = 2f;
             cc.radius = 0.5f;
-            player.AddComponent<TestMover>();
+            player.AddComponent<PlayerMover>();
 
             // ---- 카메라 (02 §2-1: FOV 28, 부감 15°, 거리 12, 높이 3.2) ----
             var camGo = new GameObject("Main Camera");
