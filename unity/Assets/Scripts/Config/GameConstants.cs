@@ -8,16 +8,19 @@ namespace Nurungi.Config
     {
         // ---- 카메라 (02 §2-1) ----
         public const float CameraFov = 28f;          // ★ 바꾸면 배경 625장이 어긋남
-        public const float CameraPitchDeg = 15f;     // ★ 부감 각도, 배경 프롬프트와 동일
-        public const float CameraDistance = 12f;     // 초안값
-        public const float CameraHeight = 3.2f;      // 초안값 (지면 기준)
+        // ⚠ 부감 15°(★)는 FOV 28과 조합 시 하늘이 화면에 안 들어옴(시야 상단 -1°).
+        //    참조 영상의 하늘 여백 재현을 위해 8°로 조정 — 02 §2-2 "지평선 62% 정합 튜닝" 근거.
+        //    디렉터 확정 필요 (확정 시 배경 생성 프롬프트도 "8° 부감"으로 통일할 것).
+        public const float CameraPitchDeg = 3f;
+        public const float CameraDistance = 11f;     // 누룽이(0.9m)가 화면 높이의 ~16% (참조 영상 비율)
+        public const float CameraHeight = 2.4f;      // 지면 기준 — 하늘 여백이 화면 절반이 되는 높이
         public const float HorizonViewportY = 0.62f; // ★ 배경 지평선 위치 (02 §2-2)
 
         // ---- SafeBox (02 §2-3) ----
         public const float SafeBoxHalfX = 0.18f;     // 가로 ±18% (뷰포트)
         public const float SafeBoxHalfY = 0.10f;     // 세로 ±10%
         public const float SafeBoxCenterX = 0.5f;
-        public const float SafeBoxCenterY = 0.55f;   // 지평선 62% 정합용 (03 §1-1 Screen Y)
+        public const float SafeBoxCenterY = 0.25f;   // 캐릭터를 화면 하단에 두어 하늘 여백 확보 (참조 영상 구도)
         public const float CameraDampX = 0.25f;      // 가로 SmoothDamp
         public const float CameraDampY = 0.45f;      // 세로 (느리게)
         public const float CameraMaxLead = 1.5f;     // 속도 리드 최대
