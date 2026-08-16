@@ -1,0 +1,41 @@
+{
+  "worlds": [
+    {
+      "id": "street",
+      "name": "동네 골목",
+      "description": "담벼락을 따라 걷는 첫 산책길",
+      "timeOfDay": "day",
+      "chapters": [
+        {
+          "id": "street_01",
+          "name": "첫 산책",
+          "scene": "StreetMock",
+          "unlockedByDefault": true,
+          "unlockedBy": ""
+        },
+        {
+          "id": "street_02",
+          "name": "가로수 아래",
+          "scene": "StreetMock",
+          "unlockedByDefault": false,
+          "unlockedBy": "street_01"
+        }
+      ]
+    },
+    {
+      "id": "testlab",
+      "name": "회색 상자 (개발용)",
+      "description": "손맛과 카메라를 확인하는 테스트 맵",
+      "timeOfDay": "day",
+      "chapters": [
+        {
+          "id": "greybox_01",
+          "name": "회색 박스 맵",
+          "scene": "GreyBox",
+          "unlockedByDefault": true,
+          "unlockedBy": ""
+        }
+      ]
+    }
+  ]
+}

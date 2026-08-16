@@ -40,5 +40,16 @@ namespace Nurungi.Config
         public const float TurnSpeedWalkDeg = 540f;
         public const float TurnSpeedRunDeg = 720f;
         public const float InputDeadZone = 0.15f;    // 01 §3-2
+
+        // ---- 하이브리드 보행 (01 §3-3, §4-4) ----
+        public const float StanceTransitionSeconds = 0.3f;  // 2족↔4족 전환. 속도는 유지
+        public const float SprintStickThreshold = 0.8f;     // 스틱 깊이 이상이면 질주
+
+        // ---- 점프 (01 §4-4) ----
+        public const float JumpHeight = 0.9f;        // 누룽이 키만큼
+        public const float Gravity = -16f;           // 만화적 무게감: 실제 중력보다 무겁게
+        public const float JumpBufferSeconds = 0.12f;// 착지 직전 입력을 받아둠
+        public const float CoyoteSeconds = 0.10f;    // 발판을 막 벗어난 직후에도 점프 허용
+        public const float AirControlMul = 0.55f;    // 공중 방향 전환 제한
     }
 }

@@ -2,6 +2,7 @@ using System.IO;
 using Nurungi.CameraSystem;
 using Nurungi.Config;
 using Nurungi.Player;
+using Nurungi.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -57,6 +58,28 @@ namespace Nurungi.Build
             cc.height = 2f;
             cc.radius = 0.5f;
             player.AddComponent<PlayerMover>();
+
+            // 캡슐 본체를 Visual로 분리해 스탠스 전환이 눈에 보이게 한다
+            var visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            visual.name = "Visual";
+            Object.DestroyImmediate(visual.GetComponent<CapsuleCollider>());
+            Object.DestroyImmediate(player.GetComponent<MeshRenderer>());
+            Object.DestroyImmediate(player.GetComponent<MeshFilter>());
+            visual.transform.SetParent(player.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+
+            var stance = player.AddComponent<StanceController>();
+            var stanceSo = new SerializedObject(stance);
+            stanceSo.FindProperty("visual").objectReferenceValue = visual.transform;
+            stanceSo.ApplyModifiedPropertiesWithoutUndo();
+
+            var sessionGo = new GameObject("ChapterSession");
+            var session = sessionGo.AddComponent<ChapterSession>();
+            var sessionSo = new SerializedObject(session);
+            sessionSo.FindProperty("chapterId").stringValue = "greybox_01";
+            sessionSo.FindProperty("player").objectReferenceValue = player.transform;
+            sessionSo.FindProperty("goalX").floatValue = 56f;
+            sessionSo.ApplyModifiedPropertiesWithoutUndo();
 
             // ---- 카메라 (02 §2-1: FOV 28, 부감 15°, 거리 12, 높이 3.2) ----
             var camGo = new GameObject("Main Camera");

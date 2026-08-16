@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/Scenes/Title.unity
+    guid: 1c13befc040a09d4a8091e4ec042f1a4
+  - enabled: 1
+    path: Assets/Scenes/StreetMock.unity
+    guid: 710e358783ecce14da0046c8fbb86596
+  - enabled: 1
+    path: Assets/Scenes/GreyBox.unity
+    guid: f0aa8195a6b1bf44ebeaf53ef1daf211
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

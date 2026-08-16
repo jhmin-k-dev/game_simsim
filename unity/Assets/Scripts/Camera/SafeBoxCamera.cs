@@ -52,9 +52,12 @@ namespace Nurungi.CameraSystem
             SnapToTarget();
         }
 
+        private Nurungi.Player.PlayerMover _mover;
+
         public void SetTarget(Transform t)
         {
             target = t;
+            _mover = t != null ? t.GetComponent<Nurungi.Player.PlayerMover>() : null;
             if (isActiveAndEnabled && t != null)
             {
                 _lastTargetPos = t.position;
@@ -92,6 +95,10 @@ namespace Nurungi.CameraSystem
             if (dt <= 0f) return;
 
             UpdatePortraitMode();
+
+            // 점프 중이면 세로 추적을 눌러 붙인다 (02 §2-3 5)
+            if (_mover == null && target != null) _mover = target.GetComponent<Nurungi.Player.PlayerMover>();
+            if (_mover != null) TargetGrounded = _mover.IsGrounded;
 
             // ---- 속도 리드 (02 §2-3 6): 이동 방향으로 최대 1.5m 선행, 0.4s 블렌드 ----
             Vector3 targetVel = (target.position - _lastTargetPos) / dt;

@@ -2,6 +2,7 @@ using System.IO;
 using Nurungi.CameraSystem;
 using Nurungi.Config;
 using Nurungi.Player;
+using Nurungi.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -104,11 +105,13 @@ namespace Nurungi.Build
             cc.center = new Vector3(0f, 0.45f, 0f);
             player.AddComponent<PlayerMover>();
 
+            GameObject visualRoot = null;
             var dogAsset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Char/nurungi_draft.obj");
             if (dogAsset != null)
             {
                 var visual = (GameObject)Object.Instantiate(dogAsset, player.transform);
                 visual.name = "Visual";
+                visualRoot = visual;
                 visual.transform.localPosition = Vector3.zero;
                 visual.transform.localRotation = Quaternion.identity; // Player가 이미 +X를 향함
                 var furMat = MakeToonMaterial(DogFur);
@@ -140,7 +143,24 @@ namespace Nurungi.Build
                 cap.transform.SetParent(player.transform, false);
                 cap.transform.localScale = new Vector3(0.5f, 0.45f, 0.5f);
                 cap.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+                cap.name = "Visual";
+                visualRoot = cap;
             }
+
+            // 하이브리드 보행 (01 §4-4): 질주·지침 시 4족
+            var stance = player.AddComponent<StanceController>();
+            var stanceSo = new SerializedObject(stance);
+            stanceSo.FindProperty("visual").objectReferenceValue = visualRoot != null ? visualRoot.transform : null;
+            stanceSo.ApplyModifiedPropertiesWithoutUndo();
+
+            // 챕터 진행·세이브 (01 §8)
+            var sessionGo = new GameObject("ChapterSession");
+            var session = sessionGo.AddComponent<ChapterSession>();
+            var sessionSo = new SerializedObject(session);
+            sessionSo.FindProperty("chapterId").stringValue = "street_01";
+            sessionSo.FindProperty("player").objectReferenceValue = player.transform;
+            sessionSo.FindProperty("goalX").floatValue = 92f;
+            sessionSo.ApplyModifiedPropertiesWithoutUndo();
 
             // ---- 카메라 + SafeBox + 포스트 ----
             var camGo = new GameObject("Main Camera");
