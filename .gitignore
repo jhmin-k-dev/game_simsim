@@ -1,0 +1,29 @@
+# 빌드 산출물 (기술사양 §5-3)
+build/
+
+# Unity (프로젝트는 unity/ 하위에 생성 예정 — 02 §7)
+unity/[Ll]ibrary/
+unity/[Tt]emp/
+unity/[Oo]bj/
+unity/[Bb]uild/
+unity/[Bb]uilds/
+unity/[Ll]ogs/
+unity/[Uu]ser[Ss]ettings/
+unity/[Mm]emoryCaptures/
+unity/.vsconfig
+*.csproj
+*.sln
+.vs/
+.idea/
+
+# 배경 생성 원본 (선택 전 후보 1,875장 — git에 안 넣음, 파이프라인 §5)
+art_raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+Thumbs.db
+Desktop.ini
