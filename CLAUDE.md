@@ -73,5 +73,7 @@
 
 ## 현재 상태 (2026-08-16)
 
-- 문서 세팅 완료. Unity 프로젝트 **아직 없음**
-- 다음: 07 §8 1주차 체크리스트 — Unity 6 설치 → MCP 연결 → 큐브 EXE 빌드
+- ✅ Unity 6000.3.22f1 (LTS) + Windows IL2CPP, `unity/` URP 프로젝트
+- ✅ Unity MCP 연결 (CoplayDev v10, HTTP localhost:8080, `.mcp.json`) — 서버는 Unity 에디터의 Window→MCP for Unity 창에서 시작
+- ✅ 큐브 EXE 빌드·실행 성공 (`Tools→누룽이→Build Windows EXE`, 출력 `build/win/`)
+- 다음 (07 §8 1주차 나머지): SafeBoxCamera + 추적 카메라 + 회색 박스 맵 → 두 조작 방식 이동 → 세로 모드 확인
