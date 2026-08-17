@@ -137,8 +137,8 @@ namespace Nurungi.Build
                 visual.name = "Visual";
                 visualRoot = visual;
                 visual.transform.localPosition = Vector3.zero;
-                // FBX 코 방향 = 로컬 +X (본 배치·정점 측정 일치) → +Z로 -90° 보정
-                visual.transform.localRotation = rigged ? Quaternion.Euler(0f, -90f, 0f) : Quaternion.identity;
+                // nurungi_v2 (제미나이 3뷰 → Hunyuan3D-mv): 코 = 로컬 +Z, 보정 불필요 (4방향 캡처 검증)
+                visual.transform.localRotation = Quaternion.identity;
                 var furMat = MakeToonMaterial(DogFur);
                 foreach (var r in visual.GetComponentsInChildren<MeshRenderer>())
                     r.sharedMaterial = furMat;

@@ -8,19 +8,21 @@ import trimesh
 
 src, dst = sys.argv[1], sys.argv[2]
 target = int(sys.argv[3]) if len(sys.argv) > 3 else 20000
+no_cut = "nocut" in sys.argv  # 받침대 없는 모델은 바닥 절단 생략
 
 mesh = trimesh.load(src, force="mesh")
 print(f"입력: {len(mesh.vertices):,} verts / {len(mesh.faces):,} tris")
 
-# ---- 받침대 제거: 바닥 근처 얇은 원반 = y 최저부 슬랩 ----
-y = mesh.vertices[:, 1]
-y0, y1 = y.min(), y.max()
-h = y1 - y0
-cut = y0 + h * 0.045  # 받침대 두께 추정 (전체 높이의 ~4.5%)
-face_y = y[mesh.faces].min(axis=1)
-keep = face_y > cut
-mesh.update_faces(keep)
-mesh.remove_unreferenced_vertices()
+if not no_cut:
+    # ---- 받침대 제거: 바닥 근처 얇은 원반 = y 최저부 슬랩 ----
+    y = mesh.vertices[:, 1]
+    y0, y1 = y.min(), y.max()
+    h = y1 - y0
+    cut = y0 + h * 0.045  # 받침대 두께 추정 (전체 높이의 ~4.5%)
+    face_y = y[mesh.faces].min(axis=1)
+    keep = face_y > cut
+    mesh.update_faces(keep)
+    mesh.remove_unreferenced_vertices()
 
 # 연결 요소 중 가장 큰 것만 (받침대 잔여물·부유 조각 제거)
 parts = mesh.split(only_watertight=False)
