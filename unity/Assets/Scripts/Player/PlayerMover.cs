@@ -49,6 +49,12 @@ namespace Nurungi.Player
         public float HorizontalSpeed => new Vector2(_velocity.x, _velocity.z).magnitude;
         public float VerticalVelocity => _verticalVel;
 
+        // ---- 대시 (토글 + 게이지, 2026-08-18) ----
+        private float _dashGauge = GameConstants.DashMaxSeconds;
+        private bool _dashOn;
+        public float DashNormalized => _dashGauge / GameConstants.DashMaxSeconds;
+        public bool DashOn => _dashOn;
+
         /// 스크립트(연출) 제어 중에는 플레이어 입력을 받지 않는다
         public bool ExternalControl { get; set; }
 
@@ -105,6 +111,13 @@ namespace Nurungi.Player
             Vector3 wishDir = Vector3.zero;
             float maxSpeed = GameConstants.WalkSpeed;
 
+            // ---- 대시 토글 (2026-08-18): 누르면 켜짐, 게이지 소진 시 자동 꺼짐, 다시 눌러야 재대시 ----
+            if (WasDashPressed())
+            {
+                if (_dashOn) _dashOn = false;                                   // 수동 해제
+                else if (_dashGauge >= GameConstants.DashMinToStart) _dashOn = true;
+            }
+
             switch (_mode)
             {
                 case ControlMode.Direct:
@@ -112,9 +125,7 @@ namespace Nurungi.Player
                     {
                         wishDir = new Vector3(direct.x, 0f, direct.y);
                         if (wishDir.sqrMagnitude > 1f) wishDir.Normalize();
-                        // 스틱 깊이 0.8 이상 또는 Shift → 질주 (§3-3)
-                        bool sprintInput = direct.magnitude >= GameConstants.SprintStickThreshold || IsRunKeyHeld();
-                        maxSpeed = sprintInput ? GameConstants.RunSpeed : GameConstants.WalkSpeed;
+                        maxSpeed = _dashOn ? GameConstants.RunSpeed : GameConstants.WalkSpeed;
                     }
                     // 키를 뗐으면 wishDir=0 → 감속 정지
                     break;
@@ -131,8 +142,8 @@ namespace Nurungi.Player
                     else
                     {
                         wishDir = toTarget / dist;
-                        // 출발 시 6m 이상이면 질주 구간, 도착 2m 전에는 걷기로 (§3-3)
-                        maxSpeed = _runLeg && dist > walkApproachDistance
+                        // 클릭 이동도 대시 토글이 켜져 있을 때만 질주 (도착 직전엔 걷기)
+                        maxSpeed = _dashOn && dist > walkApproachDistance
                             ? GameConstants.RunSpeed
                             : GameConstants.WalkSpeed;
                     }
@@ -142,9 +153,21 @@ namespace Nurungi.Player
             bool sprinting = maxSpeed > GameConstants.WalkSpeed + 0.01f && wishDir.sqrMagnitude > 0f;
             IsSprinting = sprinting;
 
-            // 지쳐 있으면 질주 속도가 나오지 않는다 (연출이지 페널티 게이지가 아님 — 01 §4-4)
-            if (stance != null && stance.IsTired && sprinting)
-                maxSpeed = Mathf.Lerp(GameConstants.WalkSpeed, GameConstants.RunSpeed, 0.45f);
+            // ---- 게이지: 대시 중 소모(이동할 때만), 아니면 회복 ----
+            if (sprinting)
+            {
+                _dashGauge -= dt;
+                if (_dashGauge <= 0f)
+                {
+                    _dashGauge = 0f;
+                    _dashOn = false;   // 소진 → 자동 해제, 다시 눌러야 함
+                }
+            }
+            else
+            {
+                _dashGauge = Mathf.Min(GameConstants.DashMaxSeconds,
+                    _dashGauge + GameConstants.DashRegenPerSec * dt);
+            }
 
             // ---- 가감속 (§3-3) — 모드/스탠스 전환에서 속도 리셋 없음 ----
             bool grounded = _cc.isGrounded;
@@ -253,12 +276,13 @@ namespace Nurungi.Player
             return v;
         }
 
-        private static bool IsRunKeyHeld()
+        /// 대시 토글 버튼: Shift 또는 패드 X (누르는 순간만)
+        private static bool WasDashPressed()
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.leftShiftKey.isPressed) return true;
+            if (kb != null && kb.leftShiftKey.wasPressedThisFrame) return true;
             var pad = Gamepad.current;
-            return pad != null && pad.buttonWest.isPressed;
+            return pad != null && pad.buttonWest.wasPressedThisFrame;
         }
 
         private static bool WasJumpPressed()

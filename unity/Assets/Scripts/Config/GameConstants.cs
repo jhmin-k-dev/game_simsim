@@ -41,7 +41,11 @@ namespace Nurungi.Config
 
         // ---- 하이브리드 보행 (01 §3-3, §4-4) ----
         public const float StanceTransitionSeconds = 0.3f;  // 2족↔4족 전환. 속도는 유지
-        public const float SprintStickThreshold = 0.8f;     // 스틱 깊이 이상이면 질주
+
+        // ---- 대시 (디렉터 확정 2026-08-18: 토글 버튼 + 게이지) ----
+        public const float DashMaxSeconds = 5f;      // 꽉 찬 게이지로 5초 질주
+        public const float DashRegenPerSec = 1.4f;   // 초당 회복량 (완충까지 ~3.6초)
+        public const float DashMinToStart = 0.8f;    // 이만큼은 차야 다시 켤 수 있음
 
         // ---- 캐릭터 스케일 (디렉터 확정 2026-08-18: 35% 축소 후 추가 20% 축소) ----
         public const float DogScale = 0.52f;         // 전고 0.9m × 0.52 ≈ 0.47m

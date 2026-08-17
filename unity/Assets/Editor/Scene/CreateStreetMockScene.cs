@@ -253,6 +253,82 @@ namespace Nurungi.Build
             // 스크립트 콘솔 (F1) — 개발 도구
             new GameObject("ScriptConsole").AddComponent<Nurungi.Scripting.ScriptConsole>();
 
+            // 대시 게이지 HUD + 가방 소지
+            new GameObject("DashGaugeUI").AddComponent<UI.DashGaugeUI>();
+            player.AddComponent<BagCarrier>();
+
+            // ---- 가방 픽업 (맵 중간 x=300) ----
+            var bagRoot = new GameObject("Bag_Pickup");
+            bagRoot.transform.position = new Vector3(300f, 0.16f, 0.5f);
+            var bagMat = MakeToonMaterial(C(203, 178, 140));      // 캔버스 베이지
+            var bagBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.DestroyImmediate(bagBody.GetComponent<Collider>());
+            bagBody.name = "Body";
+            bagBody.transform.SetParent(bagRoot.transform, false);
+            bagBody.transform.localScale = new Vector3(0.17f, 0.13f, 0.07f);
+            bagBody.GetComponent<MeshRenderer>().sharedMaterial = bagMat;
+            var handleMat = MakeToonMaterial(C(150, 118, 82));
+            var handle = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.DestroyImmediate(handle.GetComponent<Collider>());
+            handle.name = "Handle";
+            handle.transform.SetParent(bagRoot.transform, false);
+            handle.transform.localPosition = new Vector3(0f, 0.095f, 0f);
+            handle.transform.localScale = new Vector3(0.1f, 0.035f, 0.02f);
+            handle.GetComponent<MeshRenderer>().sharedMaterial = handleMat;
+            var pawTag = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.DestroyImmediate(pawTag.GetComponent<Collider>());
+            pawTag.name = "PawTag";
+            pawTag.transform.SetParent(bagRoot.transform, false);
+            pawTag.transform.localPosition = new Vector3(0f, 0f, -0.037f);
+            pawTag.transform.localScale = new Vector3(0.05f, 0.05f, 0.004f);
+            pawTag.GetComponent<MeshRenderer>().sharedMaterial = handleMat;
+
+            var bagTrigger = bagRoot.AddComponent<SphereCollider>();
+            bagTrigger.isTrigger = true;
+            bagTrigger.radius = 0.45f;
+            var bagRb = bagRoot.AddComponent<Rigidbody>();
+            bagRb.isKinematic = true;
+            bagRoot.AddComponent<BagPickup>();
+            bagRoot.AddComponent<Player.LookInterestPoint>().radius = 4f;
+
+            // ---- 차량 통행 (매너 운전 토이카) ----
+            new GameObject("CarTraffic").AddComponent<CarTraffic>();
+
+            // ---- 거리 장애물: 화분·상자 (점프/우회 대상, §12: 퍼즐 아님 연출) ----
+            var potMat = MakeToonMaterial(C(188, 121, 88));      // 테라코타
+            var leafMat = MakeToonMaterial(C(148, 162, 96));
+            var crateMat = MakeToonMaterial(C(196, 168, 122));
+            for (int i = 0; i < 12; i++)
+            {
+                float ox = 28f + i * 47f + (i % 3) * 6f;
+                if (Mathf.Abs(ox - 300f) < 6f) ox += 10f;         // 가방 자리 피하기
+                if (i % 2 == 0)
+                {
+                    // 화분 + 덤불
+                    var pot = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    pot.name = $"Pot_{i}";
+                    pot.transform.position = new Vector3(ox, 0.09f, 1.7f);
+                    pot.transform.localScale = new Vector3(0.24f, 0.09f, 0.24f);
+                    pot.GetComponent<MeshRenderer>().sharedMaterial = potMat;
+                    var leaf = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    Object.DestroyImmediate(leaf.GetComponent<Collider>());
+                    leaf.name = "Leaf";
+                    leaf.transform.SetParent(pot.transform, false);
+                    leaf.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+                    leaf.transform.localScale = new Vector3(1.15f, 2.6f, 1.15f);
+                    leaf.GetComponent<MeshRenderer>().sharedMaterial = leafMat;
+                }
+                else
+                {
+                    var crate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    crate.name = $"Crate_{i}";
+                    crate.transform.position = new Vector3(ox, 0.11f, 1.9f);
+                    crate.transform.rotation = Quaternion.Euler(0f, (i * 37f) % 25f - 12f, 0f);
+                    crate.transform.localScale = new Vector3(0.24f, 0.22f, 0.24f);
+                    crate.GetComponent<MeshRenderer>().sharedMaterial = crateMat;
+                }
+            }
+
             // 챕터 진행·세이브 (01 §8)
             var sessionGo = new GameObject("ChapterSession");
             var session = sessionGo.AddComponent<ChapterSession>();
