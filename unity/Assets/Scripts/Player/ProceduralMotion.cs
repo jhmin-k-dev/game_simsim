@@ -61,6 +61,7 @@ namespace Nurungi.Player
         private bool _wasGrounded = true;
         private Vector3 _lastPos;
         private float _smoothedSpeed;
+        private Quaternion _baseRot = Quaternion.identity;
 
         private bool _initialized;
 
@@ -77,6 +78,7 @@ namespace Nurungi.Player
             if (visual == null) return;
             _basePos = visual.localPosition;
             _baseScale = visual.localScale;
+            _baseRot = visual.localRotation;   // 모델 정면 보정각 보존 (FBX/OBJ 축 차이)
             _lastPos = transform.position;
             if (_stance != null) _stance.DriveVisual = false;
             ResetBlinkTimer();
@@ -242,7 +244,8 @@ namespace Nurungi.Player
             // 회전: 스탠스 피치 + 경사 피치 + 관심 요 + 뒤뚱 롤
             float stancePitch = (_stance != null ? _stance.QuadPitchDeg : 52f) * quadT;
             float roll = Mathf.Sin(_stridePhase) * waddleRollDeg * _waddleWeight * (1f - quadT * 0.5f);
-            visual.localRotation = Quaternion.Euler(stancePitch + _slopePitch, _lookYaw, roll);
+            // 절차 회전은 기준 보정각(_baseRot) 위에 겹친다
+            visual.localRotation = Quaternion.Euler(stancePitch + _slopePitch, _lookYaw, roll) * _baseRot;
 
             // 위치: 스탠스 오프셋 + 뒤뚱 밥
             float bob = Mathf.Abs(Mathf.Sin(_stridePhase)) * waddleBobMeters * _waddleWeight;

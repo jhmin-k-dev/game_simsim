@@ -76,6 +76,15 @@ namespace Nurungi.Build
             streamer.templateMaterial = MakeUnlitMaterial(Color.white, null, false);
             bgStream.AddComponent<ParallaxLayer>().factor = 0.85f; // 담벼락이 지면에 붙어 있어 은은하게만
 
+            // 에디터 프리뷰용 정적 판 (런타임 Start에서 스트리머가 지우고 다시 관리)
+            for (int i = 0; i < 3; i++)
+            {
+                var pv = CreateTexQuad($"SegPreview_{i}", $"{ArtBg}/bg_street_{i % 3:00}.png", unlit: true, alphaClip: false);
+                pv.transform.SetParent(bgStream.transform, false);
+                pv.transform.localPosition = new Vector3((i + 0.5f) * bgW, quadCenterY, 14f);
+                pv.transform.localScale = new Vector3(bgW + 0.02f, bgH, 1f);
+            }
+
             // ---- 원경 하늘 (z=+40) ----
             var skyQuad = CreateTexQuad("SkyFar", $"{ArtBg}/sky.png", unlit: true, alphaClip: false);
             skyQuad.transform.position = new Vector3(48f, 18f, 39f);
@@ -117,17 +126,53 @@ namespace Nurungi.Build
             player.AddComponent<PlayerMover>();
 
             GameObject visualRoot = null;
-            var dogAsset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Char/nurungi_draft.obj");
+            // 리깅 FBX가 있으면 우선, 없으면 정적 OBJ (09 §A-4 진행 상태에 따라)
+            var dogAsset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Char/nurungi_rigged.fbx");
+            bool rigged = dogAsset != null;
+            if (dogAsset == null)
+                dogAsset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Char/nurungi_draft.obj");
             if (dogAsset != null)
             {
                 var visual = (GameObject)Object.Instantiate(dogAsset, player.transform);
                 visual.name = "Visual";
                 visualRoot = visual;
                 visual.transform.localPosition = Vector3.zero;
-                visual.transform.localRotation = Quaternion.identity; // Player가 이미 +X를 향함
+                // FBX 코 방향 = 로컬 +X (본 배치·정점 측정 일치) → +Z로 -90° 보정
+                visual.transform.localRotation = rigged ? Quaternion.Euler(0f, -90f, 0f) : Quaternion.identity;
                 var furMat = MakeToonMaterial(DogFur);
                 foreach (var r in visual.GetComponentsInChildren<MeshRenderer>())
                     r.sharedMaterial = furMat;
+                foreach (var r in visual.GetComponentsInChildren<SkinnedMeshRenderer>())
+                    r.sharedMaterial = furMat;
+
+                if (rigged)
+                {
+                    // Animator + 초안 클립 (BuildDogAnimations 산출물)
+                    var animator = visual.GetComponent<Animator>();
+                    if (animator == null) animator = visual.AddComponent<Animator>();
+                    var ctrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Art/Char/Anim/DogController.controller");
+                    if (ctrl != null) animator.runtimeAnimatorController = ctrl;
+                    visual.AddComponent<DogAnimatorDriver>();
+
+                    // ③ 스프링본: 귀·꼬리 (01 §4-3)
+                    foreach (var tr in visual.GetComponentsInChildren<Transform>())
+                    {
+                        if (tr.name == "ear.L" || tr.name == "ear.R")
+                        {
+                            var sp = tr.gameObject.AddComponent<SpringBone>();
+                            sp.boneLength = 0.09f;
+                            sp.stiffness = 160f;
+                            sp.damping = 0.32f;
+                        }
+                        else if (tr.name == "tail")
+                        {
+                            var sp = tr.gameObject.AddComponent<SpringBone>();
+                            sp.boneLength = 0.11f;
+                            sp.stiffness = 120f;
+                            sp.damping = 0.28f;
+                        }
+                    }
+                }
 
                 // 블롭 섀도우 (02 §3-3 D5) — 발밑 접지감
                 var shadow = CreateTexQuad("BlobShadow", $"{ArtProp}/blob_shadow.png", unlit: true, alphaClip: false);

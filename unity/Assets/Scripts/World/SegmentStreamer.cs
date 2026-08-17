@@ -37,6 +37,10 @@ namespace Nurungi.World
 
         private void Start()
         {
+            // 빌더가 깔아둔 에디터 프리뷰 판 제거 (스크린샷용 — 런타임은 스트리밍이 관리)
+            for (int i = transform.childCount - 1; i >= 0; i--)
+                Destroy(transform.GetChild(i).gameObject);
+
             var cam = UnityEngine.Camera.main;
             _target = cam != null ? cam.transform : transform;
             RefreshWindow(ComputeIndex(_target.position.x - transform.position.x, int.MinValue));
