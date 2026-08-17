@@ -153,6 +153,7 @@ namespace Nurungi.Build
                     var ctrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Art/Char/Anim/DogController.controller");
                     if (ctrl != null) animator.runtimeAnimatorController = ctrl;
                     visual.AddComponent<DogAnimatorDriver>();
+                    visual.AddComponent<SteppedAnimation>(); // 12fps '2컷 찍기' — 애니메이션 룩 (04 §2-4)
 
                     // ③ 스프링본: 귀·꼬리 (01 §4-3)
                     foreach (var tr in visual.GetComponentsInChildren<Transform>())
