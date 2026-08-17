@@ -15,20 +15,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "art_raw", "anchors")
 
 # 05 §2-1 고정 프롬프트 + 목업에서 검증한 팔레트 (조정: 부감 각도는 F-1 확정 후 낮음)
-STYLE = ("flat pastel cartoon illustration, children's picture book style, warm cream palette, "
+STYLE = ("flat pastel cartoon illustration, storybook style, warm cream palette, "
          "beige sky (#EDE3D0), muted olive greens, soft paper texture, "
-         "clean smooth flat color fills, single clean bold warm brown outline, "
-         "minimal detail, large empty sky, "
+         "bold warm brown outlines, minimal detail, large empty sky, "
          "eye-level view slightly above ground, horizon around 62% height, "
          "flat ground in lower third, no characters, no animals, no people, no text")
-NEGATIVE = ("sketch, pencil, hatching, crosshatch, rough lines, scribble, sketchy lines, "
-            "line texture, unfinished, draft, "
-            "photo, realistic, 3d render, people, person, animal, character, text, "
+NEGATIVE = ("photo, realistic, 3d render, people, person, animal, character, text, "
             "letters, watermark, signature, high detail, cluttered, dark, saturated colors")
 
 def submit(prompt_text, seed, ckpt, w=1216, h=832):
-    """2패스 하이레즈 txt2img (SDXL 계열): 생성 → 1.5배 잠재 업스케일 → 약한 재샘플.
-    선이 또렷해지고 형태가 정돈된다 — 최종 1824x1248."""
+    """기본 txt2img 그래프 (SDXL 계열 기준)"""
     g = {
         "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": ckpt}},
         "2": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["1", 1], "text": prompt_text}},
@@ -37,12 +33,7 @@ def submit(prompt_text, seed, ckpt, w=1216, h=832):
         "5": {"class_type": "KSampler", "inputs": {
             "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0],
             "seed": seed, "steps": 28, "cfg": 6.0, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 1.0}},
-        # ---- 2패스: 잠재 업스케일 후 낮은 denoise 재샘플 ----
-        "8": {"class_type": "LatentUpscaleBy", "inputs": {"samples": ["5", 0], "upscale_method": "nearest-exact", "scale_by": 1.5}},
-        "9": {"class_type": "KSampler", "inputs": {
-            "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["8", 0],
-            "seed": seed + 1, "steps": 12, "cfg": 5.0, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 0.22}},
-        "6": {"class_type": "VAEDecode", "inputs": {"samples": ["9", 0], "vae": ["1", 2]}},
+        "6": {"class_type": "VAEDecode", "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
         "7": {"class_type": "SaveImage", "inputs": {"images": ["6", 0], "filename_prefix": "nurungi_anchor"}},
     }
     req = urllib.request.Request(BASE + "/prompt", json.dumps({"prompt": g}).encode(),
