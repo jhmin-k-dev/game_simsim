@@ -15,12 +15,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "art_raw", "anchors")
 
 # 05 §2-1 고정 프롬프트 + 목업에서 검증한 팔레트 (조정: 부감 각도는 F-1 확정 후 낮음)
-STYLE = ("flat pastel cartoon illustration, storybook style, warm cream palette, "
+STYLE = ("flat pastel cartoon illustration, children's picture book style, warm cream palette, "
          "beige sky (#EDE3D0), muted olive greens, soft paper texture, "
-         "bold warm brown outlines, minimal detail, large empty sky, "
+         "clean smooth flat color fills, single clean bold warm brown outline, "
+         "minimal detail, large empty sky, "
          "eye-level view slightly above ground, horizon around 62% height, "
          "flat ground in lower third, no characters, no animals, no people, no text")
-NEGATIVE = ("photo, realistic, 3d render, people, person, animal, character, text, "
+NEGATIVE = ("sketch, pencil, hatching, crosshatch, rough lines, scribble, sketchy lines, "
+            "line texture, unfinished, draft, "
+            "photo, realistic, 3d render, people, person, animal, character, text, "
             "letters, watermark, signature, high detail, cluttered, dark, saturated colors")
 
 def submit(prompt_text, seed, ckpt, w=1216, h=832):
@@ -38,7 +41,7 @@ def submit(prompt_text, seed, ckpt, w=1216, h=832):
         "8": {"class_type": "LatentUpscaleBy", "inputs": {"samples": ["5", 0], "upscale_method": "nearest-exact", "scale_by": 1.5}},
         "9": {"class_type": "KSampler", "inputs": {
             "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["8", 0],
-            "seed": seed + 1, "steps": 14, "cfg": 5.5, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 0.35}},
+            "seed": seed + 1, "steps": 12, "cfg": 5.0, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 0.22}},
         "6": {"class_type": "VAEDecode", "inputs": {"samples": ["9", 0], "vae": ["1", 2]}},
         "7": {"class_type": "SaveImage", "inputs": {"images": ["6", 0], "filename_prefix": "nurungi_anchor"}},
     }
