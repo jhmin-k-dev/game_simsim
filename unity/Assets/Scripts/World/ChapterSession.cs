@@ -16,6 +16,15 @@ namespace Nurungi.World
         [SerializeField] private float goalX = 92f;      // 03 §4-1 goalX
         [SerializeField] private string titleScene = "Title";
 
+        [Header("진입 연출 (04 §2-4 5번 — 영화 룩)")]
+        [SerializeField, TextArea(4, 10)] private string introScript =
+            "cam distance 17 in 0s\n" +
+            "cam fov 34 in 0s\n" +
+            "dog move (7.5, 0.3) in 3.2s\n" +
+            "& cam distance 11 in 3.2s\n" +
+            "& cam fov 28 in 3.2s\n" +
+            "cam follow";
+
         private float _elapsed;
         private bool _cleared;
 
@@ -31,6 +40,13 @@ namespace Nurungi.World
                 if (mover != null) player = mover.transform;
             }
             SaveSystem.MarkChapterEntered(chapterId);
+
+            // 진입 연출 컷 — 실패해도 게임은 계속
+            if (!string.IsNullOrEmpty(introScript))
+            {
+                var errors = Scripting.ScriptRunner.GetOrCreate().Run(introScript);
+                foreach (var e in errors) Debug.LogWarning($"[Chapter] 인트로 스크립트 오류: {e}");
+            }
         }
 
         private void Update()

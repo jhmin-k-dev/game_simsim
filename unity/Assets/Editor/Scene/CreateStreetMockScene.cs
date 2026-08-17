@@ -95,7 +95,7 @@ namespace Nurungi.Build
             // 가로수: 인도 안쪽에 성기게 (참조 영상은 화면당 1그루 정도)
             for (int i = 0; i < 37; i++)
             {
-                var tree = CreateTexQuad($"Tree_{i}", $"{ArtProp}/cutout_tree.png", unlit: true, alphaClip: true);
+                var tree = CreateTexQuad($"Tree_{i}", $"{ArtProp}/cutout_tree.png", unlit: true, alphaClip: true, sway: true);
                 // 나무 밑동이 인도(y=0)에 닿도록: 컷아웃 하단 여백 30px/1024 보정
                 const float treeH = 4.2f;
                 tree.transform.position = new Vector3(9f + i * 16f, treeH * 0.5f - 0.12f, 2.4f);
@@ -107,7 +107,7 @@ namespace Nurungi.Build
             // 덤불: 담벼락 앞
             for (int i = 0; i < 28; i++)
             {
-                var bush = CreateTexQuad($"Bush_{i}", $"{ArtProp}/cutout_bush.png", unlit: true, alphaClip: true);
+                var bush = CreateTexQuad($"Bush_{i}", $"{ArtProp}/cutout_bush.png", unlit: true, alphaClip: true, sway: true);
                 // 덤불 컷아웃은 512px 중 하단 ~90px가 여백 → 중심을 살짝 올려 밑동을 지면에 붙임
                 const float bushH = 1.6f;
                 bush.transform.position = new Vector3(3f + i * 21f, bushH * 0.5f - 0.28f, 2.1f);
@@ -335,14 +335,26 @@ namespace Nurungi.Build
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
 
-        private static GameObject CreateTexQuad(string name, string texPath, bool unlit, bool alphaClip)
+        private static GameObject CreateTexQuad(string name, string texPath, bool unlit, bool alphaClip, bool sway = false)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
             go.name = name;
             Object.DestroyImmediate(go.GetComponent<Collider>());
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
             if (tex == null) Debug.LogWarning($"[StreetMock] 텍스처 미발견: {texPath}");
-            go.GetComponent<MeshRenderer>().sharedMaterial = MakeUnlitMaterial(Color.white, tex, alphaClip);
+
+            Material mat;
+            if (sway && Shader.Find("Nurungi/CutoutSway") != null)
+            {
+                // 바람 흔들림 (02 §3-3, 04 §2-4 3번 — 정지 프레임 없애기)
+                mat = new Material(Shader.Find("Nurungi/CutoutSway"));
+                mat.SetTexture("_BaseMap", tex);
+            }
+            else
+            {
+                mat = MakeUnlitMaterial(Color.white, tex, alphaClip);
+            }
+            go.GetComponent<MeshRenderer>().sharedMaterial = mat;
             return go;
         }
 
