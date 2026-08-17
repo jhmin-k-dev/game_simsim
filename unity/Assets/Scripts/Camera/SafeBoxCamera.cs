@@ -38,6 +38,10 @@ namespace Nurungi.CameraSystem
         private bool _portrait;
         private float _baseDistanceScale = 1f;
 
+        /// 스크립트(연출)에서 덮어쓰는 값. 기본값은 02 §2-1 상수.
+        public float ScriptDistance { get; set; } = GameConstants.CameraDistance;
+        public float ScriptHeight { get; set; } = GameConstants.CameraHeight;
+
         private void Awake()
         {
             _cam = GetComponent<UnityEngine.Camera>();
@@ -77,7 +81,7 @@ namespace Nurungi.CameraSystem
         private Vector3 ComputeCenteredPosition()
         {
             if (_cam == null) _cam = GetComponent<UnityEngine.Camera>(); // 에디터(Awake 이전) 호출 대비
-            float dist = GameConstants.CameraDistance * _baseDistanceScale;
+            float dist = ScriptDistance * _baseDistanceScale;
             // 회전 고정 상태에서 distance만큼 뒤로 물러난 기본 위치
             Vector3 pos = target.position - transform.forward * dist;
             // 대상을 뷰포트 (centerX, centerY)에 놓기 위한 오프셋 보정
@@ -85,6 +89,7 @@ namespace Nurungi.CameraSystem
             Vector2 world = WorldPerViewport(depth);
             pos += transform.right * (0.5f - centerX) * world.x;
             pos += transform.up * (0.5f - centerY) * world.y;
+            pos.y += ScriptHeight - GameConstants.CameraHeight; // 스크립트 높이 오프셋
             return pos;
         }
 

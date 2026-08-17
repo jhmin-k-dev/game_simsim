@@ -73,6 +73,8 @@ namespace Nurungi.Build
             stanceSo.FindProperty("visual").objectReferenceValue = visual.transform;
             stanceSo.ApplyModifiedPropertiesWithoutUndo();
 
+            new GameObject("ScriptConsole").AddComponent<Nurungi.Scripting.ScriptConsole>();
+
             var sessionGo = new GameObject("ChapterSession");
             var session = sessionGo.AddComponent<ChapterSession>();
             var sessionSo = new SerializedObject(session);

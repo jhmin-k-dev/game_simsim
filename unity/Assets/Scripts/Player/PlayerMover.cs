@@ -44,6 +44,18 @@ namespace Nurungi.Player
         public bool IsGrounded => _cc != null && _cc.isGrounded;
         public bool IsSprinting { get; private set; }
 
+        /// 스크립트(연출) 제어 중에는 플레이어 입력을 받지 않는다
+        public bool ExternalControl { get; set; }
+
+        /// 스크립트에서 점프시키기 (dog jump)
+        public void RequestScriptedJump()
+        {
+            _verticalVel = Mathf.Sqrt(2f * -GameConstants.Gravity * GameConstants.JumpHeight);
+            _scriptedAirborne = true;
+        }
+
+        private bool _scriptedAirborne;
+
         private void Awake()
         {
             _cc = GetComponent<CharacterController>();
@@ -55,6 +67,13 @@ namespace Nurungi.Player
         {
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
+
+            if (ExternalControl)
+            {
+                // 스크립트가 수평 이동을 맡는다. 중력·점프만 여기서 처리
+                UpdateScriptedVertical(dt);
+                return;
+            }
 
             // ---- 입력 수집: 마지막 입력이 이긴다 (01 §3-2) ----
             Vector2 direct = ReadDirectInput();
@@ -147,6 +166,20 @@ namespace Nurungi.Player
 
             _cc.Move((_velocity + Vector3.up * _verticalVel) * dt);
             _wasGrounded = grounded;
+        }
+
+        /// 스크립트 제어 중의 중력·점프. 수평은 ScriptAction이 직접 옮긴다.
+        private void UpdateScriptedVertical(float dt)
+        {
+            bool grounded = _cc.isGrounded;
+            if (grounded && _verticalVel < 0f)
+            {
+                _verticalVel = -2f;
+                _scriptedAirborne = false;
+            }
+            _verticalVel += GameConstants.Gravity * dt;
+            _velocity = Vector3.zero;
+            _cc.Move(Vector3.up * _verticalVel * dt);
         }
 
         // ---- 점프 (01 §4-4) ----

@@ -153,6 +153,9 @@ namespace Nurungi.Build
             stanceSo.FindProperty("visual").objectReferenceValue = visualRoot != null ? visualRoot.transform : null;
             stanceSo.ApplyModifiedPropertiesWithoutUndo();
 
+            // 스크립트 콘솔 (F1) — 개발 도구
+            new GameObject("ScriptConsole").AddComponent<Nurungi.Scripting.ScriptConsole>();
+
             // 챕터 진행·세이브 (01 §8)
             var sessionGo = new GameObject("ChapterSession");
             var session = sessionGo.AddComponent<ChapterSession>();
