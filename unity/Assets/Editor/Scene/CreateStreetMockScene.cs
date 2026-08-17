@@ -56,9 +56,30 @@ namespace Nurungi.Build
             CreateGroundBox("Road", new Vector3(300f, -0.40f, -2.2f), new Vector3(620f, 0.5f, 2.5f), Road);
 
             // ---- 배경판: 세그먼트 스트리밍 (03 §3) + 은은한 시차 (03 §2-1) ----
-            const float bgW = 15f, bgH = bgW * 1152f / 2048f;
+            // 제미나이 배경(street_gemini)이 있으면 우선, 없으면 파이썬 목업(street_mock)
+            var bgTextures = new[]
+            {
+                AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/BG/street_gemini/bg_gem_00.png"),
+                AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/BG/street_gemini/bg_gem_01.png"),
+                AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/BG/street_gemini/bg_gem_02.png"),
+            };
+            if (bgTextures[0] == null)
+            {
+                bgTextures = new[]
+                {
+                    AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_00.png"),
+                    AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_01.png"),
+                    AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_02.png"),
+                };
+            }
+
+            const float bgW = 15f;
+            // 판 높이는 텍스처 비율에서 (그림 안 담장 상단 = 77.5% 규칙은 prep 스크립트가 보장)
+            float bgH = bgTextures[0] != null
+                ? bgW * bgTextures[0].height / bgTextures[0].width
+                : bgW * 1152f / 2048f;
             const float wallTopY = 1.2f;
-            float quadCenterY = wallTopY - bgH * (0.5f - 0.775f); // 담벼락 상단(그림 77.5%)을 y=1.2에
+            float quadCenterY = wallTopY - bgH * (0.5f - 0.775f);
 
             var bgStream = new GameObject("BGStream");
             var streamer = bgStream.AddComponent<SegmentStreamer>();
@@ -67,19 +88,18 @@ namespace Nurungi.Build
             streamer.quadHeight = bgH;
             streamer.quadCenterY = quadCenterY;
             streamer.quadZ = 14f;
-            streamer.textures = new[]
-            {
-                AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_00.png"),
-                AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_01.png"),
-                AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_02.png"),
-            };
+            streamer.textures = bgTextures;
             streamer.templateMaterial = MakeUnlitMaterial(Color.white, null, false);
             bgStream.AddComponent<ParallaxLayer>().factor = 0.85f; // 담벼락이 지면에 붙어 있어 은은하게만
 
             // 에디터 프리뷰용 정적 판 (런타임 Start에서 스트리머가 지우고 다시 관리)
             for (int i = 0; i < 3; i++)
             {
-                var pv = CreateTexQuad($"SegPreview_{i}", $"{ArtBg}/bg_street_{i % 3:00}.png", unlit: true, alphaClip: false);
+                var pv = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                pv.name = $"SegPreview_{i}";
+                Object.DestroyImmediate(pv.GetComponent<Collider>());
+                var pvMat = MakeUnlitMaterial(Color.white, bgTextures[i % bgTextures.Length], false);
+                pv.GetComponent<MeshRenderer>().sharedMaterial = pvMat;
                 pv.transform.SetParent(bgStream.transform, false);
                 pv.transform.localPosition = new Vector3((i + 0.5f) * bgW, quadCenterY, 14f);
                 pv.transform.localScale = new Vector3(bgW + 0.02f, bgH, 1f);
@@ -255,13 +275,11 @@ namespace Nurungi.Build
             var vig = profile.Add<Vignette>(true);
             vig.intensity.Override(0.25f);
             vig.smoothness.Override(0.6f);
+            // 색보정 최소화 — 제미나이 원화의 색을 그대로 살린다 (과보정이 화면을 탁하게 만들었음)
             var colAdj = profile.Add<ColorAdjustments>(true);
-            colAdj.saturation.Override(4f);       // 참조 영상은 채도가 죽지 않은 따뜻한 크림톤
-            colAdj.contrast.Override(-6f);        // 플랫하게
-            colAdj.postExposure.Override(0.12f);
+            colAdj.postExposure.Override(0.04f);
             var wb = profile.Add<WhiteBalance>(true);
-            wb.temperature.Override(16f);
-            wb.tint.Override(-3f);
+            wb.temperature.Override(5f);
             Directory.CreateDirectory("Assets/Settings/Mock");
             AssetDatabase.CreateAsset(profile, "Assets/Settings/Mock/StreetMockVolume.asset");
             vol.sharedProfile = profile;
@@ -278,7 +296,7 @@ namespace Nurungi.Build
             var raw = rawGo.AddComponent<RawImage>();
             raw.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/FX/paper_grain.png");
             raw.uvRect = new Rect(0f, 0f, 3.75f, 2.11f);
-            raw.color = new Color(1f, 1f, 1f, 0.55f);
+            raw.color = new Color(1f, 1f, 1f, 0.25f); // 은은하게 — 과하면 화면 전체가 탁해짐
             raw.raycastTarget = false;
             var rt = raw.rectTransform;
             rt.anchorMin = Vector2.zero;
