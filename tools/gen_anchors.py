@@ -24,7 +24,8 @@ NEGATIVE = ("photo, realistic, 3d render, people, person, animal, character, tex
             "letters, watermark, signature, high detail, cluttered, dark, saturated colors")
 
 def submit(prompt_text, seed, ckpt, w=1216, h=832):
-    """기본 txt2img 그래프 (SDXL 계열 기준)"""
+    """2패스 하이레즈 txt2img (SDXL 계열): 생성 → 1.5배 잠재 업스케일 → 약한 재샘플.
+    선이 또렷해지고 형태가 정돈된다 — 최종 1824x1248."""
     g = {
         "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": ckpt}},
         "2": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["1", 1], "text": prompt_text}},
@@ -33,7 +34,12 @@ def submit(prompt_text, seed, ckpt, w=1216, h=832):
         "5": {"class_type": "KSampler", "inputs": {
             "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["4", 0],
             "seed": seed, "steps": 28, "cfg": 6.0, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 1.0}},
-        "6": {"class_type": "VAEDecode", "inputs": {"samples": ["5", 0], "vae": ["1", 2]}},
+        # ---- 2패스: 잠재 업스케일 후 낮은 denoise 재샘플 ----
+        "8": {"class_type": "LatentUpscaleBy", "inputs": {"samples": ["5", 0], "upscale_method": "nearest-exact", "scale_by": 1.5}},
+        "9": {"class_type": "KSampler", "inputs": {
+            "model": ["1", 0], "positive": ["2", 0], "negative": ["3", 0], "latent_image": ["8", 0],
+            "seed": seed + 1, "steps": 14, "cfg": 5.5, "sampler_name": "dpmpp_2m", "scheduler": "karras", "denoise": 0.35}},
+        "6": {"class_type": "VAEDecode", "inputs": {"samples": ["9", 0], "vae": ["1", 2]}},
         "7": {"class_type": "SaveImage", "inputs": {"images": ["6", 0], "filename_prefix": "nurungi_anchor"}},
     }
     req = urllib.request.Request(BASE + "/prompt", json.dumps({"prompt": g}).encode(),
