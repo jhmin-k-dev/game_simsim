@@ -50,10 +50,16 @@ namespace Nurungi.Build
             lightGo.transform.rotation = Quaternion.Euler(45f, -35f, 0f);
 
             // ---- 3D 바닥: 인도 + 차도 (03 §2-1 시차 1.0 레인), 챕터 600m ----
+            // 바닥 질감은 배경 원화에서 추출(ground_gem) — 도형 바닥의 이질감 제거
+            string groundTex = "Assets/Art/BG/street_gemini/ground_gem.png";
+            bool hasGem = AssetDatabase.LoadAssetAtPath<Texture2D>(groundTex) != null;
+            var roadWarm = new Color(166 / 255f, 148 / 255f, 129 / 255f); // 원화 평균색
             CreateGroundBox("Sidewalk", new Vector3(300f, -0.25f, 0.9f), new Vector3(620f, 0.5f, 3.2f), Sidewalk,
-                $"{ArtBg}/pavement_tile.png", new Vector2(310f, 1.6f));
-            CreateGroundBox("Curb", new Vector3(300f, -0.28f, -0.85f), new Vector3(620f, 0.5f, 0.25f), Curb);
-            CreateGroundBox("Road", new Vector3(300f, -0.40f, -2.2f), new Vector3(620f, 0.5f, 2.5f), Road);
+                hasGem ? groundTex : $"{ArtBg}/pavement_tile.png", new Vector2(155f, 0.8f));
+            CreateGroundBox("Curb", new Vector3(300f, -0.28f, -0.85f), new Vector3(620f, 0.5f, 0.25f),
+                Color.Lerp(roadWarm, Color.white, 0.25f));
+            CreateGroundBox("Road", new Vector3(300f, -0.40f, -2.2f), new Vector3(620f, 0.5f, 2.5f),
+                Color.Lerp(roadWarm, Color.black, 0.08f));
 
             // ---- 경계벽 (투명): 맵 밖 추락 방지 — 화면 소실 버그의 원인 ----
             CreateInvisibleWall("Bound_Front", new Vector3(300f, 1f, -3.6f), new Vector3(620f, 3f, 0.2f));

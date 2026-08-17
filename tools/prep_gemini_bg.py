@@ -36,3 +36,20 @@ for i in range(3):
     tile = band.crop((i * tw, 0, (i + 1) * tw, band.height))
     tile.save(os.path.join(OUT, f"bg_gem_{i:02d}.png"))
     print("saved", f"bg_gem_{i:02d}.png", tile.size)
+
+# ---- 바닥 질감: 원화 하단의 보도 띠를 추출해 가로 타일로 ----
+# (파이썬 도형 바닥이 원화와 이질감을 내던 문제 — 같은 그림에서 떠온 질감으로 통일)
+import numpy as np
+ORIG = Image.open(SRC).convert("RGB")
+oH = ORIG.height
+strip = ORIG.crop((0, int(oH * 0.90), ORIG.width, int(oH * 0.985)))
+# 가로로 이어붙여도 티 안 나게: 좌우 240px 크로스페이드
+s = np.asarray(strip).astype(np.float32)
+fade = 240
+alpha = np.linspace(0, 1, fade)[None, :, None]
+s[:, :fade] = s[:, :fade] * alpha + s[:, -fade:] * (1 - alpha)
+tileable = Image.fromarray(s[:, : s.shape[1] - fade].astype(np.uint8))
+tileable = tileable.resize((1024, 256))
+tileable.save(os.path.join(OUT, "ground_gem.png"))
+avg = tuple(int(c) for c in np.asarray(tileable).reshape(-1, 3).mean(axis=0))
+print("saved ground_gem.png, 평균색 =", avg)

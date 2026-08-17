@@ -9,7 +9,7 @@ namespace Nurungi.Config
         // ---- 카메라 (02 §2-1) ----
         public const float CameraFov = 28f;          // ★ 바꾸면 배경 625장이 어긋남
         public const float CameraPitchDeg = 3f;      // ★확정 2026-08-17 (디렉터, 3°/8°/15° 비교 후) — 배경 프롬프트와 동일해야 함
-        public const float CameraDistance = 7.5f;    // 축소된 누룽이가 참조 영상 비율로 보이는 거리
+        public const float CameraDistance = 6.2f;    // 축소된 누룽이가 참조 영상 비율로 보이는 거리
         public const float CameraHeight = 2.4f;      // 지면 기준 — 하늘 여백이 화면 절반이 되는 높이
         public const float HorizonViewportY = 0.62f; // ★ 배경 지평선 위치 (02 §2-2)
 
@@ -43,8 +43,8 @@ namespace Nurungi.Config
         public const float StanceTransitionSeconds = 0.3f;  // 2족↔4족 전환. 속도는 유지
         public const float SprintStickThreshold = 0.8f;     // 스틱 깊이 이상이면 질주
 
-        // ---- 캐릭터 스케일 (디렉터 확정 2026-08-18: 기존 대비 35% 축소) ----
-        public const float DogScale = 0.65f;         // 전고 0.9m × 0.65 ≈ 0.59m
+        // ---- 캐릭터 스케일 (디렉터 확정 2026-08-18: 35% 축소 후 추가 20% 축소) ----
+        public const float DogScale = 0.52f;         // 전고 0.9m × 0.52 ≈ 0.47m
 
         // ---- 점프 (01 §4-4) ----
         public const float JumpHeight = 0.55f;       // 축소된 키에 비례
