@@ -33,11 +33,17 @@ namespace Nurungi.Scripting
             Camera = UnityEngine.Camera.main;
         }
 
-        /// 스크립트가 끝나면 원상복구
+        /// 스크립트가 끝나면 원상복구 — 연출이 중간에 끊겨도 카메라 값이 어중간하게 남지 않게
         public void ReleaseAll()
         {
             if (Dog != null) Dog.ExternalControl = false;
             if (Cam != null) Cam.enabled = true;
+            if (Camera != null) Camera.fieldOfView = Config.GameConstants.CameraFov;
+            if (Cam != null)
+            {
+                Cam.ScriptDistance = Config.GameConstants.CameraDistance;
+                Cam.ScriptHeight = Config.GameConstants.CameraHeight;
+            }
             CameraDetached = false;
             CameraFreeVelocity = Vector3.zero;
         }

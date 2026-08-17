@@ -69,6 +69,11 @@ namespace Nurungi.CameraSystem
             }
         }
 
+        // 스냅 시점의 기준값 — 세로·깊이 추적은 월드 기준 오프셋으로만 한다
+        private float _snapDogY;
+        private float _snapDogZ;
+        private Vector3 _snapCamPos;
+
         /// 초기 배치: 대상이 안전 상자 중심(뷰포트 centerX/centerY)에 오도록 즉시 이동
         private void SnapToTarget()
         {
@@ -76,6 +81,9 @@ namespace Nurungi.CameraSystem
             _desired = transform.position;
             _dampVelocity = Vector3.zero;
             _lead = Vector3.zero;
+            _snapDogY = target.position.y;
+            _snapDogZ = target.position.z;
+            _snapCamPos = transform.position;
         }
 
         private Vector3 ComputeCenteredPosition()
@@ -114,23 +122,32 @@ namespace Nurungi.CameraSystem
 
             Vector3 focus = target.position + _lead;
 
-            // ---- 뷰포트 좌표로 안전 상자 판정 (02 §2-3 1~3) ----
+            // ---- 가로(X): 뷰포트 안전 상자 판정 (02 §2-3 1~3) ----
+            // 주의 1: 목표는 반드시 "현재 카메라 위치 기준 절대값"으로 계산한다.
+            //   누적(+=) 방식은 대상이 계속 이동하면 초과분이 중복 가산되어 수조 단위로 발산했다 (2026-08-18).
+            // 주의 2: 세로는 뷰포트로 판정하면 안 된다 — 대상이 깊이(z)로 다가올 때 화면상 내려가는 것을
+            //   "아래 이동"으로 착각해 카메라가 땅속으로 파고든다.
             Vector3 vp = _cam.WorldToViewportPoint(focus);
             if (vp.z > 0f)
             {
-                Vector2 world = WorldPerViewport(vp.z); // 원근 보정: 대상 depth에서의 뷰포트→월드 환산
+                Vector2 world = WorldPerViewport(vp.z);
                 float dx = OverflowAmount(vp.x, centerX, halfX);
-                float dy = OverflowAmount(vp.y, centerY, halfY);
-                if (dx != 0f) _desired += transform.right * dx * world.x;
-                if (dy != 0f) _desired += transform.up * dy * world.y;
+                _desired.x = dx != 0f
+                    ? transform.position.x + dx * world.x   // 상자 경계에 딱 놓이는 절대 위치
+                    : transform.position.x;                  // 상자 안 = 정지 (02 §2-3 2)
             }
+
+            // ---- 세로(Y)·깊이(Z): 월드 기준 오프셋 추적 (횡스크롤 표준) ----
+            // 점프 등 실제 높이 변화만 60% 반영, 깊이 이동은 카메라가 같이 밀려 구도 유지
+            _desired.y = _snapCamPos.y + (focus.y - _snapDogY) * 0.6f;
+            _desired.z = _snapCamPos.z + (focus.z - _snapDogZ);
 
             // ---- SmoothDamp: 가로 빠르게, 세로 느리게 (02 §2-3 4~5) ----
             float yDamp = dampY * (TargetGrounded ? 1f : 1f / GameConstants.JumpVerticalDampMul);
             Vector3 pos = transform.position;
             pos.x = Mathf.SmoothDamp(pos.x, _desired.x, ref _dampVelocity.x, dampX);
             pos.y = Mathf.SmoothDamp(pos.y, _desired.y, ref _dampVelocity.y, yDamp);
-            pos.z = Mathf.SmoothDamp(pos.z, _desired.z, ref _dampVelocity.z, yDamp);
+            pos.z = Mathf.SmoothDamp(pos.z, _desired.z, ref _dampVelocity.z, 0.35f);
             transform.position = pos;
         }
 

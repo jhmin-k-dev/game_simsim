@@ -39,6 +39,7 @@ namespace Nurungi.Player
         private float _jumpBufferTimer;
         private float _coyoteTimer;
         private bool _wasGrounded = true;
+        private Vector3 _lastGroundedPos;   // 낙사 복구용
 
         /// SafeBoxCamera가 점프 중 세로 추적을 줄이는 데 쓴다 (02 §2-3 5)
         public bool IsGrounded => _cc != null && _cc.isGrounded;
@@ -169,7 +170,22 @@ namespace Nurungi.Player
             if (stance != null) stance.Tick(sprinting, dt);
 
             _cc.Move((_velocity + Vector3.up * _verticalVel) * dt);
+
+            if (grounded) _lastGroundedPos = transform.position;
+            FallGuard();
             _wasGrounded = grounded;
+        }
+
+        /// 맵 밖 낙사 안전망: 경계벽이 놓쳐도 마지막 접지 지점으로 복귀
+        private void FallGuard()
+        {
+            if (transform.position.y > -3f) return;
+            Vector3 back = _lastGroundedPos != Vector3.zero ? _lastGroundedPos : new Vector3(4f, 0.3f, 0.3f);
+            _cc.enabled = false;
+            transform.position = back + Vector3.up * 0.2f;
+            _cc.enabled = true;
+            _velocity = Vector3.zero;
+            _verticalVel = -1f;
         }
 
         /// 스크립트 제어 중의 중력·점프. 수평은 ScriptAction이 직접 옮긴다.

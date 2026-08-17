@@ -18,9 +18,9 @@ namespace Nurungi.Player
         [SerializeField] private Transform visual;
 
         [Header("4족 자세 (클립 도입 전 임시 표현)")]
-        [SerializeField] private float quadPitchDeg = 52f;   // 앞으로 숙이는 각
-        [SerializeField] private float quadDropY = -0.16f;   // 몸이 낮아짐
-        [SerializeField] private float quadForwardZ = 0.12f; // 무게중심 앞으로
+        [SerializeField] private float quadPitchDeg = 36f;    // 숙임 완화 — 과하면 다리가 화면에서 사라짐
+        [SerializeField] private float quadDropY = -0.06f;
+        [SerializeField] private float quadForwardZ = 0.05f;
 
         [Header("지침 연출 (01 §4-4 — 게이지·수치 없음)")]
         [SerializeField] private float sprintSecondsUntilTired = 6f;

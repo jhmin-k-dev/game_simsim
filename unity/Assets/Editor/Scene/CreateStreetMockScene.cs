@@ -55,6 +55,12 @@ namespace Nurungi.Build
             CreateGroundBox("Curb", new Vector3(300f, -0.28f, -0.85f), new Vector3(620f, 0.5f, 0.25f), Curb);
             CreateGroundBox("Road", new Vector3(300f, -0.40f, -2.2f), new Vector3(620f, 0.5f, 2.5f), Road);
 
+            // ---- 경계벽 (투명): 맵 밖 추락 방지 — 화면 소실 버그의 원인 ----
+            CreateInvisibleWall("Bound_Front", new Vector3(300f, 1f, -3.6f), new Vector3(620f, 3f, 0.2f));
+            CreateInvisibleWall("Bound_Back", new Vector3(300f, 1f, 2.7f), new Vector3(620f, 3f, 0.2f));
+            CreateInvisibleWall("Bound_Left", new Vector3(-0.5f, 1f, 0f), new Vector3(0.2f, 3f, 14f));
+            CreateInvisibleWall("Bound_Right", new Vector3(600.5f, 1f, 0f), new Vector3(0.2f, 3f, 14f));
+
             // ---- 배경판: 세그먼트 스트리밍 (03 §3) + 은은한 시차 (03 §2-1) ----
             // 제미나이 배경(street_gemini)이 있으면 우선, 없으면 파이썬 목업(street_mock)
             var bgTextures = new[]
@@ -139,10 +145,11 @@ namespace Nurungi.Build
             player.transform.position = new Vector3(4f, 0.05f, 0.3f);
             // 진행 방향(+X) 기준이되, 정지 상태에서는 살짝 카메라 쪽으로 튼 3/4 뷰 (참조 영상 구도)
             player.transform.rotation = Quaternion.Euler(0f, 125f, 0f);
+            float ds = GameConstants.DogScale; // 35% 축소 (2026-08-18)
             var cc = player.AddComponent<CharacterController>();
-            cc.height = 0.9f;
-            cc.radius = 0.25f;
-            cc.center = new Vector3(0f, 0.45f, 0f);
+            cc.height = 0.9f * ds;
+            cc.radius = 0.25f * ds;
+            cc.center = new Vector3(0f, 0.45f * ds, 0f);
             player.AddComponent<PlayerMover>();
 
             GameObject visualRoot = null;
@@ -157,6 +164,7 @@ namespace Nurungi.Build
                 visual.name = "Visual";
                 visualRoot = visual;
                 visual.transform.localPosition = Vector3.zero;
+                visual.transform.localScale = Vector3.one * ds;
                 // nurungi_v2 (제미나이 3뷰 → Hunyuan3D-mv): 코 = 로컬 +Z, 보정 불필요 (4방향 캡처 검증)
                 visual.transform.localRotation = Quaternion.identity;
                 var furMat = MakeToonMaterial(DogFur);
@@ -200,7 +208,7 @@ namespace Nurungi.Build
                 shadow.transform.SetParent(player.transform, false);
                 shadow.transform.localPosition = new Vector3(0f, 0.012f, 0f);
                 shadow.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                shadow.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
+                shadow.transform.localScale = new Vector3(0.85f * ds, 0.85f * ds, 1f);
                 var sm = shadow.GetComponent<MeshRenderer>().sharedMaterial;
                 sm.SetFloat("_Surface", 1f); // Transparent
                 sm.SetFloat("_Blend", 0f);
@@ -341,6 +349,14 @@ namespace Nurungi.Build
 
         // ---- helpers ----
 
+        private static void CreateInvisibleWall(string name, Vector3 pos, Vector3 scale)
+        {
+            var go = new GameObject(name);
+            go.transform.position = pos;
+            var box = go.AddComponent<BoxCollider>();
+            box.size = scale;
+        }
+
         private static void CreateGroundBox(string name, Vector3 pos, Vector3 scale, Color color,
                                             string texPath = null, Vector2? tiling = null)
         {
@@ -407,7 +423,7 @@ namespace Nurungi.Build
             mat.SetColor("_BaseColor", color);
             mat.SetColor("_ShadowColor", C(224, 186, 140)); // 웜톤 그림자
             mat.SetColor("_OutlineColor", C(122, 96, 66));
-            mat.SetFloat("_OutlineWidth", 0.0021f);
+            mat.SetFloat("_OutlineWidth", 0.0028f); // 축소된 캐릭터가 배경에 묻히지 않게 선을 또렷이
             mat.SetFloat("_ShadowStep", 0.52f);
             return mat;
         }
