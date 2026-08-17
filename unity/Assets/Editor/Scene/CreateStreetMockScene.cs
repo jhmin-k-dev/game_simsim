@@ -83,6 +83,9 @@ namespace Nurungi.Build
                 const float treeH = 4.2f;
                 tree.transform.position = new Vector3(9f + i * 16f, treeH * 0.5f - 0.12f, 2.4f);
                 tree.transform.localScale = new Vector3(treeH, treeH, 1f);
+                // 누룽이가 지나가며 쳐다보는 관심 지점 (01 §4-3 2)
+                var interest = tree.AddComponent<Player.LookInterestPoint>();
+                interest.radius = 3.5f;
             }
             // 덤불: 담벼락 앞
             for (int i = 0; i < 5; i++)
@@ -152,6 +155,12 @@ namespace Nurungi.Build
             var stanceSo = new SerializedObject(stance);
             stanceSo.FindProperty("visual").objectReferenceValue = visualRoot != null ? visualRoot.transform : null;
             stanceSo.ApplyModifiedPropertiesWithoutUndo();
+
+            // 절차적 레이어 6종 (01 §4-3) — 시각 합성을 전담
+            var proc = player.AddComponent<ProceduralMotion>();
+            var procSo = new SerializedObject(proc);
+            procSo.FindProperty("visual").objectReferenceValue = visualRoot != null ? visualRoot.transform : null;
+            procSo.ApplyModifiedPropertiesWithoutUndo();
 
             // 스크립트 콘솔 (F1) — 개발 도구
             new GameObject("ScriptConsole").AddComponent<Nurungi.Scripting.ScriptConsole>();

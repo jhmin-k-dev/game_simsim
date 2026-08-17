@@ -44,6 +44,10 @@ namespace Nurungi.Player
         public bool IsGrounded => _cc != null && _cc.isGrounded;
         public bool IsSprinting { get; private set; }
 
+        /// 절차적 레이어(ProceduralMotion)가 읽는 상태
+        public float HorizontalSpeed => new Vector2(_velocity.x, _velocity.z).magnitude;
+        public float VerticalVelocity => _verticalVel;
+
         /// 스크립트(연출) 제어 중에는 플레이어 입력을 받지 않는다
         public bool ExternalControl { get; set; }
 

@@ -32,6 +32,12 @@ namespace Nurungi.Player
         public bool IsTired { get; private set; }
         public bool IsTransitioning => QuadBlend > 0.001f && QuadBlend < 0.999f;
 
+        /// ProceduralMotion이 있으면 시각 적용을 그쪽에 맡긴다 (이중 쓰기 방지)
+        public bool DriveVisual { get; set; } = true;
+        public float QuadPitchDeg => quadPitchDeg;
+        public float QuadDropY => quadDropY;
+        public float QuadForwardZ => quadForwardZ;
+
         private float _sprintTimer;
         private float _restTimer;
         private Vector3 _visualBasePos;
@@ -85,7 +91,7 @@ namespace Nurungi.Player
 
         private void ApplyVisual()
         {
-            if (visual == null) return;
+            if (!DriveVisual || visual == null) return;
             // SmoothStep으로 전환 곡선을 부드럽게 (선형이면 툭 꺾여 보임)
             float t = Mathf.SmoothStep(0f, 1f, QuadBlend);
             visual.localRotation = Quaternion.Euler(quadPitchDeg * t, 0f, 0f);

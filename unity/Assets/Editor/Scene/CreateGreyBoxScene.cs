@@ -73,6 +73,15 @@ namespace Nurungi.Build
             stanceSo.FindProperty("visual").objectReferenceValue = visual.transform;
             stanceSo.ApplyModifiedPropertiesWithoutUndo();
 
+            var proc = player.AddComponent<ProceduralMotion>();
+            var procSo = new SerializedObject(proc);
+            procSo.FindProperty("visual").objectReferenceValue = visual.transform;
+            procSo.ApplyModifiedPropertiesWithoutUndo();
+
+            // 경사·계단에서 지면 정렬(①)을 확인할 관심 지점 하나
+            var rampInterest = GameObject.Find("Ramp_15deg");
+            if (rampInterest != null) rampInterest.AddComponent<Player.LookInterestPoint>().radius = 5f;
+
             new GameObject("ScriptConsole").AddComponent<Nurungi.Scripting.ScriptConsole>();
 
             var sessionGo = new GameObject("ChapterSession");
