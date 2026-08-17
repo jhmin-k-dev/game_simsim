@@ -49,34 +49,42 @@ namespace Nurungi.Build
             sun.intensity = 1.15f;
             lightGo.transform.rotation = Quaternion.Euler(45f, -35f, 0f);
 
-            // ---- 3D 바닥: 인도 + 차도 (03 §2-1 시차 1.0 레인) ----
-            // 참조 영상은 인도가 화면 하단 1/4 정도, 차도는 살짝만 보임
-            CreateGroundBox("Sidewalk", new Vector3(48f, -0.25f, 0.9f), new Vector3(120f, 0.5f, 3.2f), Sidewalk,
-                $"{ArtBg}/pavement_tile.png", new Vector2(60f, 1.6f));
-            CreateGroundBox("Curb", new Vector3(48f, -0.28f, -0.85f), new Vector3(120f, 0.5f, 0.25f), Curb);
-            CreateGroundBox("Road", new Vector3(48f, -0.40f, -2.2f), new Vector3(120f, 0.5f, 2.5f), Road);
+            // ---- 3D 바닥: 인도 + 차도 (03 §2-1 시차 1.0 레인), 챕터 600m ----
+            CreateGroundBox("Sidewalk", new Vector3(300f, -0.25f, 0.9f), new Vector3(620f, 0.5f, 3.2f), Sidewalk,
+                $"{ArtBg}/pavement_tile.png", new Vector2(310f, 1.6f));
+            CreateGroundBox("Curb", new Vector3(300f, -0.28f, -0.85f), new Vector3(620f, 0.5f, 0.25f), Curb);
+            CreateGroundBox("Road", new Vector3(300f, -0.40f, -2.2f), new Vector3(620f, 0.5f, 2.5f), Road);
 
-            // ---- 배경판: 담벼락+덤불 그림 (z=+14, 03 §2-1) ----
-            for (int i = 0; i < 8; i++)
+            // ---- 배경판: 세그먼트 스트리밍 (03 §3) + 은은한 시차 (03 §2-1) ----
+            const float bgW = 15f, bgH = bgW * 1152f / 2048f;
+            const float wallTopY = 1.2f;
+            float quadCenterY = wallTopY - bgH * (0.5f - 0.775f); // 담벼락 상단(그림 77.5%)을 y=1.2에
+
+            var bgStream = new GameObject("BGStream");
+            var streamer = bgStream.AddComponent<SegmentStreamer>();
+            streamer.segmentWidth = bgW;
+            streamer.segmentCount = 40;            // 챕터 600m (03 §3 검증용 길이)
+            streamer.quadHeight = bgH;
+            streamer.quadCenterY = quadCenterY;
+            streamer.quadZ = 14f;
+            streamer.textures = new[]
             {
-                string tex = $"{ArtBg}/bg_street_{i % 3:00}.png";
-                var quad = CreateTexQuad($"BG_{i}", tex, unlit: true, alphaClip: false);
-                // 폭 15m 판. 그림의 담벼락 상단(텍스처 위에서 77.5%)이 월드 y=1.2m에 오도록 배치
-                const float bgW = 15f, bgH = bgW * 1152f / 2048f;
-                const float wallTopY = 1.2f;
-                float quadCenterY = wallTopY - bgH * (0.5f - 0.775f); // = wallTop + 0.275*bgH
-                quad.transform.position = new Vector3(i * bgW, quadCenterY, 14f);
-                quad.transform.localScale = new Vector3(bgW + 0.02f, bgH, 1f); // 살짝 겹쳐 이음새 감춤
-            }
+                AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_00.png"),
+                AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_01.png"),
+                AssetDatabase.LoadAssetAtPath<Texture2D>($"{ArtBg}/bg_street_02.png"),
+            };
+            streamer.templateMaterial = MakeUnlitMaterial(Color.white, null, false);
+            bgStream.AddComponent<ParallaxLayer>().factor = 0.85f; // 담벼락이 지면에 붙어 있어 은은하게만
 
             // ---- 원경 하늘 (z=+40) ----
             var skyQuad = CreateTexQuad("SkyFar", $"{ArtBg}/sky.png", unlit: true, alphaClip: false);
             skyQuad.transform.position = new Vector3(48f, 18f, 39f);
-            skyQuad.transform.localScale = new Vector3(180f, 44f, 1f);
+            skyQuad.transform.localScale = new Vector3(320f, 44f, 1f);
+            skyQuad.AddComponent<ParallaxLayer>().factor = 0.1f; // 원경 (03 §2-1)
 
             // ---- 컷아웃: 가로수 (중경 z=+7) / 덤불 (근경 z=+2, 전경 z=-2.5) ----
             // 가로수: 인도 안쪽에 성기게 (참조 영상은 화면당 1그루 정도)
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 37; i++)
             {
                 var tree = CreateTexQuad($"Tree_{i}", $"{ArtProp}/cutout_tree.png", unlit: true, alphaClip: true);
                 // 나무 밑동이 인도(y=0)에 닿도록: 컷아웃 하단 여백 30px/1024 보정
@@ -88,7 +96,7 @@ namespace Nurungi.Build
                 interest.radius = 3.5f;
             }
             // 덤불: 담벼락 앞
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 28; i++)
             {
                 var bush = CreateTexQuad($"Bush_{i}", $"{ArtProp}/cutout_bush.png", unlit: true, alphaClip: true);
                 // 덤불 컷아웃은 512px 중 하단 ~90px가 여백 → 중심을 살짝 올려 밑동을 지면에 붙임
@@ -171,7 +179,7 @@ namespace Nurungi.Build
             var sessionSo = new SerializedObject(session);
             sessionSo.FindProperty("chapterId").stringValue = "street_01";
             sessionSo.FindProperty("player").objectReferenceValue = player.transform;
-            sessionSo.FindProperty("goalX").floatValue = 92f;
+            sessionSo.FindProperty("goalX").floatValue = 590f; // 챕터 600m 끝점
             sessionSo.ApplyModifiedPropertiesWithoutUndo();
 
             // ---- 카메라 + SafeBox + 포스트 ----
