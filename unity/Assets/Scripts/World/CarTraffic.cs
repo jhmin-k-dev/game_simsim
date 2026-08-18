@@ -20,8 +20,10 @@ namespace Nurungi.World
         public float spawnDistance = 26f;   // 카메라 밖에서 등장
         public float despawnDistance = 34f;
 
-        [Header("매너 운전")]
-        public float politeStopDistance = 2.4f;
+        [Header("매너 운전 — 늦게 발견하면 못 멈춘다 (충돌 = 슬랩스틱 넉백)")]
+        public float politeStopDistance = 1.6f;
+        public float brakeDecel = 5f;
+        public float startledPause = 2.2f;   // 치고 나서 놀라 멈추는 시간
 
         private static readonly Color[] Palette =
         {
@@ -44,6 +46,7 @@ namespace Nurungi.World
             public float Speed;
             public int Dir;             // +1 / -1
             public float CurrentSpeed;
+            public float PauseTimer;    // 치고 나서 놀라 멈춘 시간
         }
 
         private void Start()
@@ -78,9 +81,14 @@ namespace Nurungi.World
                 var car = _cars[i];
                 if (car.Root == null) { _cars.RemoveAt(i); continue; }
 
-                // 매너 운전: 진행 방향 앞에 누룽이가 있으면 부드럽게 정지
+                // 매너 운전: 앞에 누룽이가 보이면 브레이크 — 단, 갑자기 뛰어들면 못 멈춘다
                 float targetSpeed = car.Speed;
-                if (_player != null)
+                if (car.PauseTimer > 0f)
+                {
+                    car.PauseTimer -= dt;
+                    targetSpeed = 0f;
+                }
+                else if (_player != null)
                 {
                     Vector3 toPlayer = _player.position - car.Root.position;
                     bool ahead = Mathf.Sign(toPlayer.x) == car.Dir;
@@ -88,8 +96,30 @@ namespace Nurungi.World
                     if (ahead && inLane && Mathf.Abs(toPlayer.x) < politeStopDistance)
                         targetSpeed = 0f;
                 }
-                car.CurrentSpeed = Mathf.MoveTowards(car.CurrentSpeed, targetSpeed, 8f * dt);
+                car.CurrentSpeed = Mathf.MoveTowards(car.CurrentSpeed, targetSpeed, brakeDecel * dt);
                 car.Root.position += Vector3.right * car.Dir * car.CurrentSpeed * dt;
+
+                // ---- 충돌: 달리는 차와 겹치면 누룽이가 붕 날아간다 (만화식) ----
+                if (_player != null && car.CurrentSpeed > 1.1f)
+                {
+                    Vector3 diff = _player.position - car.Root.position;
+                    if (Mathf.Abs(diff.x) < 0.95f && Mathf.Abs(diff.z) < 0.6f && _player.position.y < 0.6f)
+                    {
+                        var mover = _player.GetComponent<Player.PlayerMover>();
+                        if (mover != null && !mover.IsKnocked)
+                        {
+                            Vector3 launch = new Vector3(
+                                car.Dir * (car.CurrentSpeed * 1.1f + 2.2f),
+                                5.6f,
+                                Random.Range(-0.4f, 0.7f));
+                            mover.Knockback(launch, -car.Dir);
+                            HitEffects.ImpactBurst(car.Root.position
+                                + Vector3.right * car.Dir * 0.7f + Vector3.up * 0.35f);
+                            car.PauseTimer = startledPause;   // 차도 놀라서 급정거
+                            car.CurrentSpeed = 0.2f;
+                        }
+                    }
+                }
 
                 // 만화적 바퀴 회전 + 몸통 미세 흔들림
                 float wheelDeg = car.CurrentSpeed / 0.09f * Mathf.Rad2Deg * dt;

@@ -55,6 +55,56 @@ namespace Nurungi.Player
         public float DashNormalized => _dashGauge / GameConstants.DashMaxSeconds;
         public bool DashOn => _dashOn;
 
+        // ---- 넉백 (차 충돌 슬랩스틱 — §12: 실패 아님, 연출) ----
+        private bool _knocked;          // 붕 떠서 나는 중
+        private float _recoverTimer;    // 착지 후 어지러움 (입력 잠금)
+        private ProceduralMotion _proc;
+        public bool IsKnocked => _knocked || _recoverTimer > 0f;
+
+        /// 차 등에 치였을 때: 포물선으로 날아가 데굴데굴 → 착지 → 어지러움 → 회복
+        public void Knockback(Vector3 launchVelocity, float tumbleDir)
+        {
+            if (_knocked) return;
+            _knocked = true;
+            _mode = ControlMode.None;
+            _dashOn = false;
+            HideMarker();
+            _velocity = new Vector3(launchVelocity.x, 0f, launchVelocity.z);
+            _verticalVel = launchVelocity.y;
+            if (_proc == null) _proc = GetComponent<ProceduralMotion>();
+            if (_proc != null) _proc.TumbleSpeed = 640f * tumbleDir;
+
+            // 연출: 히트스톱 + 카메라 셰이크 + 충격 버스트
+            World.HitEffects.HitStop(0.09f);
+            World.HitEffects.ImpactBurst(transform.position + Vector3.up * 0.25f);
+            var cam = UnityEngine.Camera.main;
+            var sbx = cam != null ? cam.GetComponent<CameraSystem.SafeBoxCamera>() : null;
+            if (sbx != null) sbx.Shake(0.55f, 0.3f);
+        }
+
+        private void UpdateKnocked(float dt)
+        {
+            // 공기 저항 살짝 + 중력(만화식으로 20% 가볍게 — 체공감)
+            _velocity = Vector3.MoveTowards(_velocity, Vector3.zero, 1.4f * dt);
+            _verticalVel += GameConstants.Gravity * 0.8f * dt;
+            _cc.Move((_velocity + Vector3.up * _verticalVel) * dt);
+
+            if (_cc.isGrounded && _verticalVel < 0f)
+            {
+                // 착지: 구르기 종료, 어지러움 시작
+                _knocked = false;
+                _recoverTimer = 1.15f;
+                _velocity = Vector3.zero;
+                _verticalVel = -1f;
+                if (_proc != null) _proc.TumbleSpeed = 0f;
+                World.HitEffects.DizzyStars(transform, 1.15f,
+                    _cc.height + 0.12f);
+                var camMain = UnityEngine.Camera.main;
+                var sbx2 = camMain != null ? camMain.GetComponent<CameraSystem.SafeBoxCamera>() : null;
+                if (sbx2 != null) sbx2.Shake(0.25f, 0.12f);
+            }
+        }
+
         /// 스크립트(연출) 제어 중에는 플레이어 입력을 받지 않는다
         public bool ExternalControl { get; set; }
 
@@ -78,6 +128,23 @@ namespace Nurungi.Player
         {
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
+
+            if (_knocked)
+            {
+                UpdateKnocked(dt);
+                return;
+            }
+            if (_recoverTimer > 0f)
+            {
+                // 어지러움: 입력 잠금, 제자리 비틀
+                _recoverTimer -= dt;
+                _velocity = Vector3.zero;
+                if (_cc.isGrounded) _verticalVel = -1f;
+                else _verticalVel += GameConstants.Gravity * dt;
+                _cc.Move(Vector3.up * _verticalVel * dt);
+                if (stance != null) stance.Tick(false, dt);
+                return;
+            }
 
             if (ExternalControl)
             {

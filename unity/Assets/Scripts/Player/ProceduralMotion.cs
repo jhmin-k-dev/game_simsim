@@ -45,6 +45,10 @@ namespace Nurungi.Player
         public event System.Action Blinked;
         public bool EyesClosed { get; private set; }
 
+        /// 넉백 데굴데굴: 초당 회전 각도 (PlayerMover.Knockback이 설정, 착지 시 0)
+        public float TumbleSpeed { get; set; }
+        private float _tumbleAngle;
+
         private PlayerMover _mover;
         private StanceController _stance;
         private Vector3 _basePos;
@@ -241,11 +245,16 @@ namespace Nurungi.Player
         {
             float quadT = Mathf.SmoothStep(0f, 1f, quad);
 
-            // 회전: 스탠스 피치 + 경사 피치 + 관심 요 + 뒤뚱 롤
+            // 넉백 텀블: 날아가는 동안 데굴데굴 (착지 시 TumbleSpeed=0 → 각도 잔여분 빠르게 복원)
+            if (TumbleSpeed != 0f) _tumbleAngle += TumbleSpeed * Time.deltaTime;
+            else if (_tumbleAngle != 0f)
+                _tumbleAngle = Mathf.MoveTowardsAngle(_tumbleAngle % 360f, 0f, 900f * Time.deltaTime);
+
+            // 회전: 스탠스 피치 + 경사 피치 + 텀블 + 관심 요 + 뒤뚱 롤
             float stancePitch = (_stance != null ? _stance.QuadPitchDeg : 52f) * quadT;
             float roll = Mathf.Sin(_stridePhase) * waddleRollDeg * _waddleWeight * (1f - quadT * 0.5f);
             // 절차 회전은 기준 보정각(_baseRot) 위에 겹친다
-            visual.localRotation = Quaternion.Euler(stancePitch + _slopePitch, _lookYaw, roll) * _baseRot;
+            visual.localRotation = Quaternion.Euler(stancePitch + _slopePitch + _tumbleAngle, _lookYaw, roll) * _baseRot;
 
             // 위치: 스탠스 오프셋 + 뒤뚱 밥
             float bob = Mathf.Abs(Mathf.Sin(_stridePhase)) * waddleBobMeters * _waddleWeight;

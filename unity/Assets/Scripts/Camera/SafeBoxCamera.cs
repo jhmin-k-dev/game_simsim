@@ -42,6 +42,16 @@ namespace Nurungi.CameraSystem
         public float ScriptDistance { get; set; } = GameConstants.CameraDistance;
         public float ScriptHeight { get; set; } = GameConstants.CameraHeight;
 
+        // ---- 셰이크 (충돌 연출) ----
+        private float _shakeTime, _shakeDuration, _shakeMagnitude;
+
+        public void Shake(float duration, float magnitude)
+        {
+            _shakeDuration = Mathf.Max(0.01f, duration);
+            _shakeTime = duration;
+            _shakeMagnitude = magnitude;
+        }
+
         private void Awake()
         {
             _cam = GetComponent<UnityEngine.Camera>();
@@ -148,6 +158,16 @@ namespace Nurungi.CameraSystem
             pos.x = Mathf.SmoothDamp(pos.x, _desired.x, ref _dampVelocity.x, dampX);
             pos.y = Mathf.SmoothDamp(pos.y, _desired.y, ref _dampVelocity.y, yDamp);
             pos.z = Mathf.SmoothDamp(pos.z, _desired.z, ref _dampVelocity.z, 0.35f);
+
+            // 충돌 셰이크 (감쇠 랜덤 흔들림 — 위치에만 얹고 추적 상태는 건드리지 않음)
+            if (_shakeTime > 0f)
+            {
+                _shakeTime -= dt;
+                float k = Mathf.Clamp01(_shakeTime / _shakeDuration);
+                Vector2 r = Random.insideUnitCircle * _shakeMagnitude * k * k;
+                pos.x += r.x;
+                pos.y += r.y;
+            }
             transform.position = pos;
         }
 
