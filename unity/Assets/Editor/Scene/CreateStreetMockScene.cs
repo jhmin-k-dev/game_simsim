@@ -253,8 +253,9 @@ namespace Nurungi.Build
             // 스크립트 콘솔 (F1) — 개발 도구
             new GameObject("ScriptConsole").AddComponent<Nurungi.Scripting.ScriptConsole>();
 
-            // 대시 게이지 HUD + 가방 소지
+            // 대시 게이지 HUD + 일시정지 메뉴 + 가방 소지
             new GameObject("DashGaugeUI").AddComponent<UI.DashGaugeUI>();
+            new GameObject("PauseMenu").AddComponent<UI.PauseMenu>();
             player.AddComponent<BagCarrier>();
 
             // ---- 가방 픽업 (맵 중간 x=300) ----

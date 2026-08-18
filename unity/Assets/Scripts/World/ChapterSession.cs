@@ -60,10 +60,15 @@ namespace Nurungi.World
                 SaveSystem.MarkChapterCleared(chapterId);
                 Debug.Log($"[Chapter] {chapterId} 클리어");
             }
+            // Esc 처리는 PauseMenu가 담당 (2026-08-18)
+        }
 
-            // Esc → 저장하고 타이틀로
-            var kb = Keyboard.current;
-            if (kb != null && kb.escapeKey.wasPressedThisFrame) ReturnToTitle();
+        /// 외부(일시정지 메뉴 등)에서 저장만 하고 싶을 때
+        public void SaveNow()
+        {
+            SaveSystem.AddPlayTime(_elapsed);
+            _elapsed = 0f;
+            SaveSystem.Save();
         }
 
         public void ReturnToTitle()

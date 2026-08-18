@@ -74,12 +74,17 @@ namespace Nurungi.Player
             if (_proc == null) _proc = GetComponent<ProceduralMotion>();
             if (_proc != null) _proc.TumbleSpeed = 640f * tumbleDir;
 
-            // 연출: 히트스톱 + 카메라 셰이크 + 충격 버스트
+            // 연출: 히트스톱 + 카메라 셰이크 + 충격 버스트 + "왈!"
             World.HitEffects.HitStop(0.09f);
             World.HitEffects.ImpactBurst(transform.position + Vector3.up * 0.25f);
+            World.SpeechBubble.Say(transform, "왈!", 1.1f, _cc.height + 0.25f);
             var cam = UnityEngine.Camera.main;
             var sbx = cam != null ? cam.GetComponent<CameraSystem.SafeBoxCamera>() : null;
             if (sbx != null) sbx.Shake(0.55f, 0.3f);
+
+            // 들고 있던 가방을 놓친다 — 다시 주우러 가야 함
+            var carrier = GetComponent<BagCarrier>();
+            if (carrier != null && carrier.HasBag) carrier.DropBag(launchVelocity);
         }
 
         private void UpdateKnocked(float dt)

@@ -37,6 +37,22 @@ namespace Nurungi.Player
             Save.SaveSystem.Save();
         }
 
+        /// 치였을 때: 가방을 놓친다 — 근처에 툭 떨어져 다시 주울 수 있음
+        public void DropBag(Vector3 tossDirection)
+        {
+            if (Bag == null) return;
+            var bag = Bag;
+            Bag = null;
+            var pickup = bag.GetComponent<World.BagPickup>();
+            Vector3 landing = transform.position
+                + new Vector3(tossDirection.x, 0f, 0f).normalized * -1.4f   // 날아가는 반대쪽으로
+                + new Vector3(0f, 0f, Random.Range(-0.3f, 0.3f));
+            landing.x = Mathf.Clamp(landing.x, 1f, 599f);
+            landing.z = Mathf.Clamp(landing.z, -3f, 2.2f);
+            landing.y = 0.16f;
+            if (pickup != null) pickup.ResetDropped(landing);
+        }
+
         private void LateUpdate()
         {
             if (Bag == null) return;

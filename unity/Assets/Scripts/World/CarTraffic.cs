@@ -117,6 +117,8 @@ namespace Nurungi.World
                                 + Vector3.right * car.Dir * 0.7f + Vector3.up * 0.35f);
                             car.PauseTimer = startledPause;   // 차도 놀라서 급정거
                             car.CurrentSpeed = 0.2f;
+                            SpeechBubble.Say(car.Root, "괜찮니?!", 2f, 0.85f,
+                                new Color(0.3f, 0.32f, 0.42f));
                         }
                     }
                 }

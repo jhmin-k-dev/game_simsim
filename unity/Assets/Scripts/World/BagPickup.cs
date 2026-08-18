@@ -39,6 +39,28 @@ namespace Nurungi.World
             transform.position = new Vector3(_basePos.x, y, _basePos.z);
         }
 
+        /// 넉백으로 놓쳤을 때: 다시 주울 수 있는 상태로 복귀
+        public void ResetDropped(Vector3 position)
+        {
+            _taken = false;
+            transform.SetParent(null);
+            transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            transform.position = position;
+            _basePos = position;
+            // 콜라이더·리지드바디 재구성 (PickUp에서 제거됨)
+            if (GetComponent<Collider>() == null)
+            {
+                var trigger = gameObject.AddComponent<SphereCollider>();
+                trigger.isTrigger = true;
+                trigger.radius = 0.45f;
+            }
+            if (GetComponent<Rigidbody>() == null)
+            {
+                var rb = gameObject.AddComponent<Rigidbody>();
+                rb.isKinematic = true;
+            }
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (_taken) return;
